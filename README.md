@@ -12,3 +12,4 @@ Sistema web y PWA independiente para el control de asistencia mediante códigos 
 - **Anti-fraude:** Los códigos QR caducan diariamente a medianoche y están firmados con HMAC-SHA256.
 - **Regla de Negocio (Jornada Única):** 1 Entrada + 1 Salida por día, protección anti-rebote (10s) y control de estancia mínima (20 min).
 - **Integrado con el Sistema Escolar:** Los registros se reflejan inmediatamente en el Panel del Director en la App de Gestión Escolar.
+

@@ -183,78 +183,101 @@
       100% { transform: scale(0.95); opacity: 0.8; }
     }
 
-    .selector-box {
+    /* Formulario de Activación por RUT */
+    .activacion-box {
       width: 100%;
       max-width: 380px;
       background: #1e293b;
       border: 1px solid #334155;
-      border-radius: 20px;
-      padding: 24px;
-      margin-bottom: 20px;
+      border-radius: 24px;
+      padding: 28px 24px;
+      margin-top: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
     }
-    .selector-box h2 {
-      font-size: 1.15rem;
-      font-weight: 700;
+    .activacion-box h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
       color: #38bdf8;
       margin-bottom: 8px;
       text-align: center;
     }
-    .selector-box p {
+    .activacion-box p {
       font-size: 0.85rem;
       color: #94a3b8;
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      line-height: 1.4;
     }
-    select, input[type="text"] {
+    .input-rut {
       width: 100%;
-      padding: 12px 14px;
+      padding: 14px 16px;
       background: #0f172a;
-      border: 1px solid #475569;
-      border-radius: 12px;
+      border: 2px solid #334155;
+      border-radius: 14px;
       color: white;
-      font-size: 0.95rem;
+      font-size: 1.1rem;
+      font-weight: 700;
       font-family: inherit;
       outline: none;
-      margin-bottom: 14px;
+      text-align: center;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
     }
-    select:focus, input[type="text"]:focus {
+    .input-rut:focus {
       border-color: #38bdf8;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
     }
-    .btn-primary {
+    .input-rut::placeholder {
+      color: #475569;
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+
+    .error-rut {
+      color: #f87171;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .btn-activar {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       background: #0284c7;
       color: white;
       border: none;
-      border-radius: 12px;
-      font-size: 0.95rem;
+      border-radius: 14px;
+      font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
       transition: background 0.2s;
     }
-    .btn-primary:hover { background: #0369a1; }
+    .btn-activar:hover { background: #0369a1; }
+    .btn-activar:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
 
     .acciones-btn {
       width: 100%;
       max-width: 380px;
       display: flex;
-      gap: 10px;
-      margin-bottom: 24px;
+      justify-content: center;
+      margin-bottom: 18px;
     }
-    .btn-secundario {
-      flex: 1;
-      padding: 10px;
+    .btn-recargar {
+      padding: 10px 24px;
       background: #1e293b;
-      color: #cbd5e1;
+      color: #94a3b8;
       border: 1px solid #334155;
       border-radius: 12px;
       font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
-      text-align: center;
-      text-decoration: none;
+      transition: all 0.2s;
     }
-    .btn-secundario:hover {
+    .btn-recargar:hover {
       background: #334155;
       color: white;
     }
@@ -270,6 +293,17 @@
       line-height: 1.4;
       text-align: center;
     }
+
+    .btn-desvincular {
+      margin-top: 24px;
+      background: transparent;
+      border: none;
+      color: #475569;
+      font-size: 0.72rem;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .btn-desvincular:hover { color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -286,21 +320,20 @@
   </div>
 
   <div id="install-banner" class="install-banner">
-    <div class="install-text">📲 Instalar en tu celular para tener tu QR a mano</div>
+    <div class="install-text">📲 Instalar en tu celular para tener tu QR siempre a mano</div>
     <button id="install-btn" class="install-btn">Instalar</button>
   </div>
 
-  <!-- Vista 1: Selector de Funcionario -->
-  <div id="vista-seleccion" class="selector-box" style="display: none;">
+  <!-- Vista 1: Ingreso Manual de RUT (Solo 1ra vez) -->
+  <div id="vista-activacion" class="activacion-box" style="display: none;">
     <h2>🪪 Activar mi Credencial</h2>
-    <p>Selecciona tu nombre de la nómina oficial para generar tu código QR diario.</p>
-    <select id="select-funcionario">
-      <option value="">Cargando funcionarios...</option>
-    </select>
-    <button id="btn-guardar-funcionario" class="btn-primary">Ver mi Credencial QR</button>
+    <p>Ingresa tu RUT para vincular de forma segura tu credencial en este teléfono. No tendrás que volver a ingresarlo.</p>
+    <input type="text" id="input-rut" class="input-rut" placeholder="Ej: 12.345.678-9" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div id="error-rut" class="error-rut"></div>
+    <button id="btn-activar" class="btn-activar">Vincular mi Credencial</button>
   </div>
 
-  <!-- Vista 2: Credencial con QR -->
+  <!-- Vista 2: Credencial con QR Personal (Fijada) -->
   <div id="vista-credencial" style="display: none; width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: center;">
     <div class="card-qr">
       <div class="card-strip"></div>
@@ -314,18 +347,19 @@
     </div>
 
     <div class="acciones-btn">
-      <button id="btn-cambiar" class="btn-secundario">🔄 Cambiar Funcionario</button>
-      <button id="btn-recargar" class="btn-secundario">⚡ Actualizar QR</button>
+      <button id="btn-recargar" class="btn-recargar">⚡ Actualizar QR</button>
     </div>
 
     <div class="aviso-seguridad">
-      🔒 <b>Seguridad Dinámica:</b> Este código se renueva automáticamente cada medianoche con firma criptográfica. Pantallazos de días pasados son rechazados por la tablet.
+      🔒 <b>Credencial Personal e Intransferible:</b> Este QR se renueva automáticamente cada día a medianoche con firma digital. No se admiten pantallazos de días pasados.
     </div>
+
+    <button id="btn-desvincular" class="btn-desvincular" onclick="desvincularDispositivo()">Desvincular este teléfono</button>
   </div>
 
   <script src="./js/qrcode.min.js"></script>
   <script>
-    // ── Configuración Supabase (Anon Key Oficial para GitHub Pages) ───────────
+    // ── Configuración Supabase ───────────────────────────────────────────────
     const SUPABASE_URL = "https://csjnjitjycbnumzodvvv.supabase.co";
     const SUPABASE_KEY = "sb_publishable_QsS5e0fI4PJ90uZfD7vUPA_CxLbz4F6";
     const QR_SECRET_KEY = "eavlp_control_asistencia_secret_2026";
@@ -335,6 +369,16 @@
       "Authorization": `Bearer ${SUPABASE_KEY}`,
       "Content-Type": "application/json"
     };
+
+    // ── Normalización de RUT Chileno ─────────────────────────────────────────
+    function normalizarRut(rut) {
+      if (!rut) return "";
+      let limpio = rut.toString().trim().replace(/[\.\s]/g, '').toUpperCase();
+      if (!limpio.includes('-') && limpio.length > 1) {
+        limpio = limpio.slice(0, -1) + '-' + limpio.slice(-1);
+      }
+      return limpio;
+    }
 
     // ── Web Crypto API: HMAC-SHA256 ──────────────────────────────────────────
     async function calcularFirma(rut, fechaYYYYMMDD) {
@@ -358,10 +402,11 @@
     }
 
     // ── Generar QR en Pantalla ───────────────────────────────────────────────
-    let qrcodeObj = null;
+    let funcionarioActual = null;
 
     async function mostrarCredencial(funcionario) {
-      document.getElementById('vista-seleccion').style.display = 'none';
+      funcionarioActual = funcionario;
+      document.getElementById('vista-activacion').style.display = 'none';
       document.getElementById('vista-credencial').style.display = 'flex';
 
       document.getElementById('func-nombre').textContent = funcionario.nombre;
@@ -376,7 +421,7 @@
 
       const qrContainer = document.getElementById('qr-container');
       qrContainer.innerHTML = '';
-      qrcodeObj = new QRCode(qrContainer, {
+      new QRCode(qrContainer, {
         text: payload,
         width: 220,
         height: 220,
@@ -386,43 +431,79 @@
       });
     }
 
-    // ── Cargar Nómina desde Supabase ──────────────────────────────────────────
-    let funcionariosLista = [];
-
-    async function cargarFuncionarios() {
+    // ── Consultar Funcionario en Supabase ────────────────────────────────────
+    async function buscarFuncionario(rut) {
       try {
-        const resp = await fetch(`${SUPABASE_URL}/rest/v1/funcionarios?select=rut,nombre,rol,estado&order=nombre.asc`, { headers: HEADERS });
-        funcionariosLista = await resp.json();
-        
-        const select = document.getElementById('select-funcionario');
-        select.innerHTML = '<option value="">-- Elige tu nombre --</option>';
-        funcionariosLista.forEach(f => {
-          if (f.rut !== 'admin' && (f.estado || '').toLowerCase() !== 'inactivo') {
-            const opt = document.createElement('option');
-            opt.value = f.rut;
-            opt.textContent = `${f.nombre} (${f.rol || 'Docente'})`;
-            select.appendChild(opt);
-          }
-        });
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/funcionarios?rut=eq.${encodeURIComponent(rut)}&select=rut,nombre,rol,estado&limit=1`, { headers: HEADERS });
+        const data = await resp.json();
+        return (data && data.length > 0) ? data[0] : null;
       } catch (e) {
-        console.error("Error al cargar funcionarios:", e);
+        console.error("Error al buscar funcionario:", e);
+        return null;
+      }
+    }
+
+    // ── Vincular RUT por Primera Vez ─────────────────────────────────────────
+    async function vincularRut() {
+      const input = document.getElementById('input-rut');
+      const errorDiv = document.getElementById('error-rut');
+      const btn = document.getElementById('btn-activar');
+      const rutIngresado = normalizarRut(input.value);
+
+      errorDiv.style.display = 'none';
+
+      if (!rutIngresado || rutIngresado.length < 3) {
+        errorDiv.textContent = "Por favor ingresa un RUT válido.";
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Verificando nómina...";
+
+      const func = await buscarFuncionario(rutIngresado);
+      btn.disabled = false;
+      btn.textContent = "Vincular mi Credencial";
+
+      if (!func) {
+        errorDiv.textContent = `El RUT ${rutIngresado} no figura en la nómina oficial del colegio. Verifica que esté bien escrito.`;
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      if ((func.estado || '').toLowerCase() === 'inactivo') {
+        errorDiv.textContent = "Este funcionario figura actualmente como INACTIVO.";
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      // Guardar de por vida en este dispositivo
+      localStorage.setItem('vlp_funcionario_rut', func.rut);
+      mostrarCredencial(func);
+    }
+
+    function desvincularDispositivo() {
+      if (confirm("¿Estás seguro de que deseas desvincular este teléfono? Tendrás que volver a ingresar tu RUT.")) {
+        localStorage.removeItem('vlp_funcionario_rut');
+        const url = new URL(window.location);
+        url.searchParams.delete('rut');
+        window.history.replaceState({}, document.title, url.pathname);
+        location.reload();
       }
     }
 
     // ── Inicialización ────────────────────────────────────────────────────────
     async function iniciar() {
-      await cargarFuncionarios();
-
       // 1. Revisar si viene RUT por parámetro en la URL (?rut=XXXXXX)
       const urlParams = new URLSearchParams(window.location.search);
       const rutParam = urlParams.get('rut');
 
-      // 2. Revisar si hay un RUT guardado previamente en LocalStorage
+      // 2. Revisar si ya está guardado en LocalStorage
       const rutGuardado = localStorage.getItem('vlp_funcionario_rut');
-      const rutActivo = rutParam || rutGuardado;
+      const rutActivo = normalizarRut(rutParam || rutGuardado);
 
       if (rutActivo) {
-        const func = funcionariosLista.find(f => f.rut === rutActivo);
+        const func = await buscarFuncionario(rutActivo);
         if (func) {
           localStorage.setItem('vlp_funcionario_rut', func.rut);
           mostrarCredencial(func);
@@ -430,45 +511,21 @@
         }
       }
 
-      // Si no hay RUT activo o no se encontró, mostrar selector
-      document.getElementById('vista-seleccion').style.display = 'block';
+      // Si no hay RUT o no se encontró, mostrar pantalla de ingreso
+      document.getElementById('vista-activacion').style.display = 'block';
       document.getElementById('vista-credencial').style.display = 'none';
     }
 
-    // Botón Guardar / Seleccionar
-    document.getElementById('btn-guardar-funcionario').addEventListener('click', () => {
-      const rut = document.getElementById('select-funcionario').value;
-      if (!rut) {
-        alert("Por favor selecciona tu nombre.");
-        return;
-      }
-      const func = funcionariosLista.find(f => f.rut === rut);
-      if (func) {
-        localStorage.setItem('vlp_funcionario_rut', func.rut);
-        mostrarCredencial(func);
-      }
+    document.getElementById('btn-activar').addEventListener('click', vincularRut);
+    document.getElementById('input-rut').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') vincularRut();
     });
 
-    // Botón Cambiar Funcionario
-    document.getElementById('btn-cambiar').addEventListener('click', () => {
-      localStorage.removeItem('vlp_funcionario_rut');
-      const url = new URL(window.location);
-      url.searchParams.delete('rut');
-      window.history.replaceState({}, document.title, url.pathname);
-      document.getElementById('vista-seleccion').style.display = 'block';
-      document.getElementById('vista-credencial').style.display = 'none';
-    });
-
-    // Botón Recargar QR
     document.getElementById('btn-recargar').addEventListener('click', () => {
-      const rutGuardado = localStorage.getItem('vlp_funcionario_rut');
-      if (rutGuardado) {
-        const func = funcionariosLista.find(f => f.rut === rutGuardado);
-        if (func) mostrarCredencial(func);
-      }
+      if (funcionarioActual) mostrarCredencial(funcionarioActual);
     });
 
-    // ── Soporte PWA / Instalación en Celular ──────────────────────────────────
+    // ── PWA / Instalación ─────────────────────────────────────────────────────
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -488,7 +545,6 @@
       }
     });
 
-    // Registrar Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
