@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Escáner Asistencia · Escuela Villa Las Peñas</title>
 
-  <link rel="manifest" href="./manifest-tablet.json">
+  <link rel="manifest" href="./manifest-tablet.json?v=5">
   <meta name="theme-color" content="#020617">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -62,6 +65,14 @@
     .brand-sub {
       font-size: 0.72rem;
       color: #94a3b8;
+    }
+    .badge-version {
+      font-size: 0.65rem;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-left: 4px;
     }
     .top-derecha {
       display: flex;
@@ -340,7 +351,7 @@
     <div class="brand">
       <img src="./icons/icon-192.png" alt="Logo">
       <div>
-        <div class="brand-title">Control de Asistencia</div>
+        <div class="brand-title">Control de Asistencia <span class="badge-version">v2.5</span></div>
         <div class="brand-sub">Escáner de Portería</div>
       </div>
     </div>
@@ -393,6 +404,15 @@
 
   <script src="./js/jsQR.js"></script>
   <script>
+    // ── Limpieza de Caché de Navegador Vieja ──────────────────────────────────
+    if (window.caches) {
+      caches.keys().then(keys => {
+        for (let k of keys) {
+          if (k !== 'asistencia-vlp-v4') caches.delete(k);
+        }
+      });
+    }
+
     // ── Configuración Supabase ───────────────────────────────────────────────
     const SUPABASE_URL = "https://csjnjitjycbnumzodvvv.supabase.co";
     const SUPABASE_KEY = "sb_publishable_QsS5e0fI4PJ90uZfD7vUPA_CxLbz4F6";
@@ -419,17 +439,18 @@
     actualizarReloj();
 
     // Timestamp que guarda exactamente la hora local de la tablet en la BD
-    function obtenerTimestampLocalISO(fechaObj = new Date()) {
+    function obtenerTimestampLocalISO() {
+      const d = new Date();
       const pad = (n) => String(n).padStart(2, '0');
-      const y = fechaObj.getFullYear();
-      const m = pad(fechaObj.getMonth() + 1);
-      const d = pad(fechaObj.getDate());
-      const h = pad(fechaObj.getHours());
-      const min = pad(fechaObj.getMinutes());
-      const s = pad(fechaObj.getSeconds());
+      const y = d.getFullYear();
+      const m = pad(d.getMonth() + 1);
+      const day = pad(d.getDate());
+      const h = pad(d.getHours());
+      const min = pad(d.getMinutes());
+      const s = pad(d.getSeconds());
 
-      // Formato sin sufijo de zona horaria para que se guarde exactamente la hora de la tablet
-      return `${y}-${m}-${d}T${h}:${min}:${s}`;
+      // Cadena local pura sin sufijo: "2026-11-03T16:15:00"
+      return `${y}-${m}-${day}T${h}:${min}:${s}`;
     }
 
     function obtenerFechaHoyTablet() {
@@ -441,10 +462,9 @@
       return { ymd: `${y}${m}${day}`, iso: `${y}-${m}-${day}` };
     }
 
-    // Parsea un timestamp guardado interpretándolo como hora local de la tablet
+    // Parsea un timestamp interpretándolo como hora local pura de la tablet
     function parsearFechaLocal(timestampStr) {
       if (!timestampStr) return new Date();
-      // Eliminar cualquier sufijo (+00:00, Z, etc.) para que JS lo tome como hora local de la tablet
       const limpio = timestampStr.toString().replace(/[\+\-]\d\d:\d\d$/, '').replace(/Z$/, '');
       const dt = new Date(limpio);
       return isNaN(dt.getTime()) ? new Date() : dt;
@@ -552,6 +572,7 @@
 
     async function insertarEvento(rut, tipo) {
       const timestampLocal = obtenerTimestampLocalISO();
+      console.log('Registrando evento con hora local de la tablet:', timestampLocal);
       const r = await fetch(`${SUPABASE_URL}/rest/v1/${TABLA}`, {
         method: "POST",
         headers: HEADERS,
@@ -793,9 +814,12 @@
       }
     });
 
+    // Actualizar Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
+        navigator.serviceWorker.register('./sw.js?v=5').then(reg => {
+          reg.update();
+        }).catch(err => console.log('SW error', err));
       });
     }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asistencia-vlp-v2';
+const CACHE_NAME = 'asistencia-vlp-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -12,9 +12,6 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
   self.skipWaiting();
 });
 
@@ -27,11 +24,20 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+// Estrategia Network-First: Siempre busca la versión más reciente en GitHub
 self.addEventListener('fetch', (e) => {
   if (e.request.url.includes('supabase.co')) {
     return;
   }
   e.respondWith(
-    caches.match(e.request).then((res) => res || fetch(e.request))
+    fetch(e.request)
+      .then((res) => {
+        if (res.status === 200 && e.request.method === 'GET') {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+        }
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
