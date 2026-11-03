@@ -126,6 +126,7 @@
       display: block;
       transition: transform 0.2s ease;
     }
+    /* Efecto espejo para cámara frontal */
     #video.espejo {
       transform: scaleX(-1);
     }
@@ -407,9 +408,8 @@
 
     // ── Hora y Fecha Basadas 100% en la Tablet ───────────────────────────────
     function obtenerHoraTabletLegible(fechaObj = new Date()) {
-      return fechaObj.toLocaleTimeString('es-CL', {
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-      });
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${pad(fechaObj.getHours())}:${pad(fechaObj.getMinutes())}:${pad(fechaObj.getSeconds())}`;
     }
 
     function actualizarReloj() {
@@ -418,6 +418,7 @@
     setInterval(actualizarReloj, 1000);
     actualizarReloj();
 
+    // Timestamp que guarda exactamente la hora local de la tablet en la BD
     function obtenerTimestampLocalISO(fechaObj = new Date()) {
       const pad = (n) => String(n).padStart(2, '0');
       const y = fechaObj.getFullYear();
@@ -427,12 +428,8 @@
       const min = pad(fechaObj.getMinutes());
       const s = pad(fechaObj.getSeconds());
 
-      const offsetMin = -fechaObj.getTimezoneOffset();
-      const signo = offsetMin >= 0 ? '+' : '-';
-      const offH = pad(Math.floor(Math.abs(offsetMin) / 60));
-      const offM = pad(Math.abs(offsetMin) % 60);
-
-      return `${y}-${m}-${d}T${h}:${min}:${s}${signo}${offH}:${offM}`;
+      // Formato sin sufijo de zona horaria para que se guarde exactamente la hora de la tablet
+      return `${y}-${m}-${d}T${h}:${min}:${s}`;
     }
 
     function obtenerFechaHoyTablet() {
@@ -442,6 +439,15 @@
       const m = pad(d.getMonth() + 1);
       const day = pad(d.getDate());
       return { ymd: `${y}${m}${day}`, iso: `${y}-${m}-${day}` };
+    }
+
+    // Parsea un timestamp guardado interpretándolo como hora local de la tablet
+    function parsearFechaLocal(timestampStr) {
+      if (!timestampStr) return new Date();
+      // Eliminar cualquier sufijo (+00:00, Z, etc.) para que JS lo tome como hora local de la tablet
+      const limpio = timestampStr.toString().replace(/[\+\-]\d\d:\d\d$/, '').replace(/Z$/, '');
+      const dt = new Date(limpio);
+      return isNaN(dt.getTime()) ? new Date() : dt;
     }
 
     // ── Sintetizador de Sonidos ──────────────────────────────────────────────
@@ -579,26 +585,22 @@
       // 1. Anti-Rebote (10s)
       if (eventos.length > 0) {
         const ultimo = eventos[eventos.length - 1];
-        const dtUltimo = new Date(ultimo.timestamp);
-        if (!isNaN(dtUltimo.getTime())) {
-          const difSeg = (Date.now() - dtUltimo.getTime()) / 1000;
-          if (difSeg < 10) {
-            return {
-              ok: false, tipoClase: 'warn', icono: '⏱️', tipo: 'MARCAJE MUY RECIENTE',
-              nombre: func.nombre,
-              hora: obtenerHoraTabletLegible(),
-              msg: `Marcaje registrado hace ${Math.floor(difSeg)}s. Espera unos segundos.`
-            };
-          }
+        const dtUltimo = parsearFechaLocal(ultimo.timestamp);
+        const difSeg = (Date.now() - dtUltimo.getTime()) / 1000;
+        if (difSeg < 10) {
+          return {
+            ok: false, tipoClase: 'warn', icono: '⏱️', tipo: 'MARCAJE MUY RECIENTE',
+            nombre: func.nombre,
+            hora: obtenerHoraTabletLegible(),
+            msg: `Marcaje registrado hace ${Math.floor(difSeg)}s. Espera unos segundos.`
+          };
         }
       }
 
       // 2. REGLA: Jornada ya completada
       if (entrada && salida) {
-        const dtIn = new Date(entrada.timestamp);
-        const dtOut = new Date(salida.timestamp);
-        const hIn = !isNaN(dtIn.getTime()) ? obtenerHoraTabletLegible(dtIn) : entrada.timestamp.slice(11, 19);
-        const hOut = !isNaN(dtOut.getTime()) ? obtenerHoraTabletLegible(dtOut) : salida.timestamp.slice(11, 19);
+        const hIn = entrada.timestamp.slice(11, 16);
+        const hOut = salida.timestamp.slice(11, 16);
         return {
           ok: false, tipoClase: 'warn', icono: '🔒', tipo: 'JORNADA FINALIZADA',
           nombre: func.nombre,
@@ -629,14 +631,9 @@
       }
 
       // 4. REGLA: Ya tiene entrada hoy -> Evaluar tiempo de permanencia (< 20 min)
-      const dtEntrada = new Date(entrada.timestamp);
-      let minutosTranscurridos = 999;
-      let hEntrada = entrada.timestamp.slice(11, 19);
-
-      if (!isNaN(dtEntrada.getTime())) {
-        minutosTranscurridos = (Date.now() - dtEntrada.getTime()) / 60000;
-        hEntrada = obtenerHoraTabletLegible(dtEntrada);
-      }
+      const dtEntrada = parsearFechaLocal(entrada.timestamp);
+      const minutosTranscurridos = (Date.now() - dtEntrada.getTime()) / 60000;
+      const hEntrada = entrada.timestamp.slice(11, 16);
 
       if (!forzarSalida && minutosTranscurridos < 20) {
         return {
