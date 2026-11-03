@@ -87,10 +87,10 @@
 
     .card-qr {
       width: 100%;
-      max-width: 380px;
+      max-width: 390px;
       background: #ffffff;
       border-radius: 28px;
-      padding: 26px 24px;
+      padding: 24px 20px;
       text-align: center;
       box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.15);
       color: #0f172a;
@@ -108,12 +108,12 @@
       background: #f8fafc;
       border: 2px dashed #cbd5e1;
       border-radius: 20px;
-      padding: 16px;
+      padding: 12px;
       display: flex;
       justify-content: center;
       align-items: center;
       margin: 12px auto;
-      min-height: 250px;
+      min-height: 294px;
     }
     .qr-frame canvas, .qr-frame img {
       max-width: 100%;
@@ -239,29 +239,6 @@
     .btn-activar:hover { background: #0369a1; }
     .btn-activar:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
 
-    .acciones-btn {
-      width: 100%;
-      max-width: 380px;
-      display: flex;
-      justify-content: center;
-      margin-bottom: 18px;
-    }
-    .btn-recargar {
-      padding: 10px 24px;
-      background: #1e293b;
-      color: #94a3b8;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-recargar:hover {
-      background: #334155;
-      color: white;
-    }
-
     .aviso-seguridad {
       max-width: 380px;
       background: rgba(245, 158, 11, 0.08);
@@ -313,7 +290,7 @@
   </div>
 
   <!-- Vista 2: Credencial con QR Personal (Fijada) -->
-  <div id="vista-credencial" style="display: none; width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: center;">
+  <div id="vista-credencial" style="display: none; width: 100%; max-width: 390px; display: flex; flex-direction: column; align-items: center;">
     <div class="card-qr">
       <div class="card-strip"></div>
       <div id="qr-container" class="qr-frame"></div>
@@ -324,12 +301,8 @@
       </div>
     </div>
 
-    <div class="acciones-btn">
-      <button id="btn-recargar" class="btn-recargar">⚡ Actualizar QR</button>
-    </div>
-
     <div class="aviso-seguridad">
-      🔒 <b>Credencial Personal e Intransferible:</b> Este QR se renueva automáticamente cada día a medianoche con firma digital. No se admiten pantallazos de días pasados.
+      🔒 <b>Credencial Personal e Intransferible:</b> Este QR se genera automáticamente cada día con firma digital de alta visibilidad. No se admiten fotos de días pasados.
     </div>
 
     <button id="btn-desvincular" class="btn-desvincular" onclick="desvincularDispositivo()">Desvincular este teléfono</button>
@@ -379,7 +352,7 @@
       return { ymd: `${y}${m}${d}`, legible: `${d}/${m}/${y}` };
     }
 
-    // ── Generar QR en Pantalla ───────────────────────────────────────────────
+    // ── Generar QR de Alta Visibilidad (270px + Nivel L) ─────────────────────
     let funcionarioActual = null;
 
     async function mostrarCredencial(funcionario) {
@@ -398,13 +371,15 @@
 
       const qrContainer = document.getElementById('qr-container');
       qrContainer.innerHTML = '';
+      
+      // Tamaño grande 270x270 y Nivel L (cuadros más grandes para escaneo a distancia)
       new QRCode(qrContainer, {
         text: payload,
-        width: 220,
-        height: 220,
-        colorDark: "#0f172a",
-        colorLight: "#f8fafc",
-        correctLevel: QRCode.CorrectLevel.M
+        width: 270,
+        height: 270,
+        colorDark: "#020617",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.L
       });
     }
 
@@ -492,10 +467,6 @@
     document.getElementById('btn-activar').addEventListener('click', vincularRut);
     document.getElementById('input-rut').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') vincularRut();
-    });
-
-    document.getElementById('btn-recargar').addEventListener('click', () => {
-      if (funcionarioActual) mostrarCredencial(funcionarioActual);
     });
 
     // ── PWA / Instalación ─────────────────────────────────────────────────────

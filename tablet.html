@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <title>Escáner Asistencia · Escuela Villa Las Peñas</title>
 
-  <link rel="manifest" href="./manifest-tablet.json?v=5">
+  <link rel="manifest" href="./manifest-tablet.json?v=6">
   <meta name="theme-color" content="#020617">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -137,7 +137,6 @@
       display: block;
       transition: transform 0.2s ease;
     }
-    /* Efecto espejo para cámara frontal */
     #video.espejo {
       transform: scaleX(-1);
     }
@@ -351,7 +350,7 @@
     <div class="brand">
       <img src="./icons/icon-192.png" alt="Logo">
       <div>
-        <div class="brand-title">Control de Asistencia <span class="badge-version">v2.5</span></div>
+        <div class="brand-title">Control de Asistencia <span class="badge-version">v2.6</span></div>
         <div class="brand-sub">Escáner de Portería</div>
       </div>
     </div>
@@ -404,11 +403,11 @@
 
   <script src="./js/jsQR.js"></script>
   <script>
-    // ── Limpieza de Caché de Navegador Vieja ──────────────────────────────────
+    // ── Limpieza de Caché de Navegador ────────────────────────────────────────
     if (window.caches) {
       caches.keys().then(keys => {
         for (let k of keys) {
-          if (k !== 'asistencia-vlp-v4') caches.delete(k);
+          if (k !== 'asistencia-vlp-v5') caches.delete(k);
         }
       });
     }
@@ -449,7 +448,6 @@
       const min = pad(d.getMinutes());
       const s = pad(d.getSeconds());
 
-      // Cadena local pura sin sufijo: "2026-11-03T16:15:00"
       return `${y}-${m}-${day}T${h}:${min}:${s}`;
     }
 
@@ -462,7 +460,6 @@
       return { ymd: `${y}${m}${day}`, iso: `${y}-${m}-${day}` };
     }
 
-    // Parsea un timestamp interpretándolo como hora local pura de la tablet
     function parsearFechaLocal(timestampStr) {
       if (!timestampStr) return new Date();
       const limpio = timestampStr.toString().replace(/[\+\-]\d\d:\d\d$/, '').replace(/Z$/, '');
@@ -708,6 +705,17 @@
       document.getElementById('status-label').textContent = 'Cámara activa · Acerca tu QR';
     }
 
+    // ── Motor de Detección QR: BarcodeDetector Nativo por Hardware + jsQR ──────
+    let nativeDetector = null;
+    if ('BarcodeDetector' in window) {
+      try {
+        nativeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+        console.log('✅ BarcodeDetector por hardware activado (GPU ultrarrápido)');
+      } catch (e) {
+        nativeDetector = null;
+      }
+    }
+
     // ── Cámara (Frontal por Defecto + Switch) ──────────────────────────────────
     let camaraModo = "user";
     let streamActual = null;
@@ -753,23 +761,42 @@
       iniciarCamara();
     }
 
-    // ── Bucle de Escaneo Continuo ─────────────────────────────────────────────
+    // ── Bucle de Escaneo Continuo de Alta Sensibilidad ─────────────────────────
     async function scanLoop() {
       if (!procesando && video.readyState === video.HAVE_ENOUGH_DATA) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: "dontInvert" });
+        let detectedPayload = null;
 
-        if (code && code.data) {
+        // 1. Escaneo nativo por hardware (GPU/NPU): Lee de lejos y ultra rápido
+        if (nativeDetector) {
+          try {
+            const barcodes = await nativeDetector.detect(video);
+            if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+              detectedPayload = barcodes[0].rawValue;
+            }
+          } catch (e) {}
+        }
+
+        // 2. Si no detectó o no hay hardware BarcodeDetector, respaldo con jsQR
+        if (!detectedPayload) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: "dontInvert" });
+          if (code && code.data) {
+            detectedPayload = code.data;
+          }
+        }
+
+        // 3. Procesar QR detectado
+        if (detectedPayload) {
           const ahora = Date.now();
-          if (code.data !== ultimoQR || (ahora - ultimoMomentoQR) > 3000) {
-            ultimoQR = code.data;
+          if (detectedPayload !== ultimoQR || (ahora - ultimoMomentoQR) > 3000) {
+            ultimoQR = detectedPayload;
             ultimoMomentoQR = ahora;
             procesando = true;
             document.getElementById('status-label').textContent = '⏳ Procesando registro...';
             
             try {
-              const val = await validarQR(code.data);
+              const val = await validarQR(detectedPayload);
               if (!val.valido) {
                 mostrarResultado({
                   ok: false, tipoClase: 'error', icono: '❌', tipo: 'QR INVÁLIDO',
@@ -817,7 +844,7 @@
     // Actualizar Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=5').then(reg => {
+        navigator.serviceWorker.register('./sw.js?v=6').then(reg => {
           reg.update();
         }).catch(err => console.log('SW error', err));
       });

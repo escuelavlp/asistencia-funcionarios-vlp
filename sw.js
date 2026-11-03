@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asistencia-vlp-v4';
+const CACHE_NAME = 'asistencia-vlp-v6';
 const ASSETS = [
   './',
   './index.html',
