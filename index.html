@@ -32,43 +32,29 @@
       max-width: 420px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       padding: 12px 6px;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
     .header-logo {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .header-logo img {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
     }
     .header-title {
-      font-size: 0.95rem;
-      font-weight: 700;
+      font-size: 1.05rem;
+      font-weight: 800;
       color: #38bdf8;
       line-height: 1.2;
     }
     .header-sub {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: #94a3b8;
-    }
-    .btn-tablet-link {
-      background: rgba(56, 189, 248, 0.1);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-    .btn-tablet-link:hover {
-      background: rgba(56, 189, 248, 0.2);
     }
 
     .install-banner {
@@ -104,13 +90,13 @@
       max-width: 380px;
       background: #ffffff;
       border-radius: 28px;
-      padding: 24px;
+      padding: 26px 24px;
       text-align: center;
       box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.15);
       color: #0f172a;
       position: relative;
       overflow: hidden;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
     .card-strip {
       position: absolute;
@@ -136,24 +122,18 @@
       border-radius: 8px;
     }
     .func-nombre {
-      font-size: 1.25rem;
-      font-weight: 800;
+      font-size: 1.35rem;
+      font-weight: 900;
       color: #0f172a;
-      margin-top: 10px;
-      line-height: 1.3;
+      margin-top: 14px;
+      line-height: 1.25;
       text-transform: uppercase;
     }
-    .func-rol {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #0284c7;
-      margin-top: 2px;
-    }
     .func-rut {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #64748b;
-      margin-top: 4px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #475569;
+      margin-top: 6px;
       letter-spacing: 0.5px;
     }
     .badge-fecha {
@@ -163,11 +143,11 @@
       background: #ecfdf5;
       color: #059669;
       border: 1px solid #a7f3d0;
-      padding: 5px 14px;
+      padding: 6px 16px;
       border-radius: 50px;
-      font-size: 0.78rem;
+      font-size: 0.82rem;
       font-weight: 700;
-      margin-top: 14px;
+      margin-top: 16px;
     }
     .badge-fecha::before {
       content: '';
@@ -316,7 +296,6 @@
         <div class="header-sub">Control de Asistencia</div>
       </div>
     </div>
-    <a href="./tablet.html" class="btn-tablet-link">📷 Escáner</a>
   </div>
 
   <div id="install-banner" class="install-banner">
@@ -339,7 +318,6 @@
       <div class="card-strip"></div>
       <div id="qr-container" class="qr-frame"></div>
       <div id="func-nombre" class="func-nombre">...</div>
-      <div id="func-rol" class="func-rol">...</div>
       <div id="func-rut" class="func-rut">...</div>
       <div class="badge-fecha">
         <span id="fecha-hoy-badge">Válido solo hoy</span>
@@ -410,7 +388,6 @@
       document.getElementById('vista-credencial').style.display = 'flex';
 
       document.getElementById('func-nombre').textContent = funcionario.nombre;
-      document.getElementById('func-rol').textContent = funcionario.rol || 'Funcionario';
       document.getElementById('func-rut').textContent = 'RUT: ' + funcionario.rut;
 
       const fecha = obtenerFechaHoy();
@@ -477,7 +454,6 @@
         return;
       }
 
-      // Guardar de por vida en este dispositivo
       localStorage.setItem('vlp_funcionario_rut', func.rut);
       mostrarCredencial(func);
     }
@@ -494,11 +470,9 @@
 
     // ── Inicialización ────────────────────────────────────────────────────────
     async function iniciar() {
-      // 1. Revisar si viene RUT por parámetro en la URL (?rut=XXXXXX)
       const urlParams = new URLSearchParams(window.location.search);
       const rutParam = urlParams.get('rut');
 
-      // 2. Revisar si ya está guardado en LocalStorage
       const rutGuardado = localStorage.getItem('vlp_funcionario_rut');
       const rutActivo = normalizarRut(rutParam || rutGuardado);
 
@@ -511,7 +485,6 @@
         }
       }
 
-      // Si no hay RUT o no se encontró, mostrar pantalla de ingreso
       document.getElementById('vista-activacion').style.display = 'block';
       document.getElementById('vista-credencial').style.display = 'none';
     }

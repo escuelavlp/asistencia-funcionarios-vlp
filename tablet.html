@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Escáner Asistencia · Escuela Villa Las Peñas</title>
 
-  <link rel="manifest" href="./manifest.json">
+  <link rel="manifest" href="./manifest-tablet.json">
   <meta name="theme-color" content="#020617">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -79,7 +79,7 @@
       border: 1px solid #334155;
       letter-spacing: 0.5px;
     }
-    .btn-camara {
+    .btn-top {
       background: #1e293b;
       color: #38bdf8;
       border: 1px solid #334155;
@@ -93,9 +93,18 @@
       gap: 6px;
       transition: all 0.2s;
     }
-    .btn-camara:hover {
+    .btn-top:hover {
       background: #334155;
       border-color: #38bdf8;
+    }
+    .btn-instalar-tablet {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: white;
+      border: none;
+      display: none;
+    }
+    .btn-instalar-tablet:hover {
+      background: #0369a1;
     }
 
     /* Contenedor del video escáner */
@@ -117,7 +126,6 @@
       display: block;
       transition: transform 0.2s ease;
     }
-    /* Efecto espejo para cámara frontal */
     #video.espejo {
       transform: scaleX(-1);
     }
@@ -244,7 +252,7 @@
       width: 100%;
       max-width: 480px;
       border-radius: 36px;
-      padding: 40px 30px;
+      padding: 42px 30px;
       text-align: center;
       box-shadow: 0 30px 90px rgba(0,0,0,0.85);
       animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -281,18 +289,12 @@
       opacity: 0.95;
     }
     .res-nombre {
-      font-size: 1.7rem;
+      font-size: 1.85rem;
       font-weight: 900;
       color: white;
-      margin: 12px 0 6px;
-      line-height: 1.25;
+      margin: 16px 0 18px;
+      line-height: 1.2;
       text-transform: uppercase;
-    }
-    .res-rol {
-      font-size: 0.92rem;
-      color: rgba(255, 255, 255, 0.85);
-      font-weight: 600;
-      margin-bottom: 18px;
     }
     .res-hora {
       display: inline-block;
@@ -342,8 +344,11 @@
       </div>
     </div>
     <div class="top-derecha">
+      <button id="btn-instalar-tablet" class="btn-top btn-instalar-tablet">
+        📲 Instalar en Tablet
+      </button>
       <div id="reloj" class="reloj">--:--:--</div>
-      <button id="btn-toggle-camara" class="btn-camara" onclick="alternarCamara()">
+      <button id="btn-toggle-camara" class="btn-top" onclick="alternarCamara()">
         🔄 <span id="label-camara">Frontal</span>
       </button>
     </div>
@@ -378,7 +383,6 @@
       <div id="res-icon" class="res-icon">✅</div>
       <div id="res-tipo" class="res-tipo">ENTRADA</div>
       <div id="res-nombre" class="res-nombre">...</div>
-      <div id="res-rol" class="res-rol">...</div>
       <div id="res-hora" class="res-hora">00:00:00</div>
       <div id="res-msg" class="res-msg">...</div>
       <br>
@@ -423,7 +427,6 @@
       const min = pad(fechaObj.getMinutes());
       const s = pad(fechaObj.getSeconds());
 
-      // Zona horaria local de la tablet (ej: -03:00)
       const offsetMin = -fechaObj.getTimezoneOffset();
       const signo = offsetMin >= 0 ? '+' : '-';
       const offH = pad(Math.floor(Math.abs(offsetMin) / 60));
@@ -525,7 +528,7 @@
 
     // ── Consultar Supabase ────────────────────────────────────────────────────
     async function obtenerFuncionario(rut) {
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/funcionarios?rut=eq.${encodeURIComponent(rut)}&select=rut,nombre,rol,estado&limit=1`, { headers: HEADERS });
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/funcionarios?rut=eq.${encodeURIComponent(rut)}&select=rut,nombre,estado&limit=1`, { headers: HEADERS });
       const data = await r.json();
       return data && data.length > 0 ? data[0] : null;
     }
@@ -561,21 +564,19 @@
 
     // ── Lógica de Negocio: Jornada Única Estricta ──────────────────────────────
     async function procesarMarcaje(rut) {
-      // 1. Validar que exista en la nómina
       const func = await obtenerFuncionario(rut);
       if (!func) {
-        return { ok: false, tipoClase: 'error', icono: '❌', tipo: 'NO ENCONTRADO', nombre: 'Desconocido', rol: '', msg: `RUT ${rut} no figura en la nómina oficial.` };
+        return { ok: false, tipoClase: 'error', icono: '❌', tipo: 'NO ENCONTRADO', nombre: 'Desconocido', msg: `RUT ${rut} no figura en la nómina oficial.` };
       }
       if ((func.estado || '').toLowerCase() === 'inactivo') {
-        return { ok: false, tipoClase: 'error', icono: '⛔', tipo: 'INACTIVO', nombre: func.nombre, rol: func.rol, msg: 'El funcionario figura como INACTIVO en la escuela.' };
+        return { ok: false, tipoClase: 'error', icono: '⛔', tipo: 'INACTIVO', nombre: func.nombre, msg: 'El funcionario figura como INACTIVO en la escuela.' };
       }
 
-      // 2. Consultar eventos de hoy
       const eventos = await obtenerEventosHoy(rut);
       const entrada = eventos.find(e => e.tipo === 'entrada');
       const salida = [...eventos].reverse().find(e => e.tipo === 'salida');
 
-      // 3. Protección Anti-Rebote (10 segundos desde el último marcaje)
+      // 1. Anti-Rebote (10s)
       if (eventos.length > 0) {
         const ultimo = eventos[eventos.length - 1];
         const dtUltimo = new Date(ultimo.timestamp);
@@ -584,7 +585,7 @@
           if (difSeg < 10) {
             return {
               ok: false, tipoClase: 'warn', icono: '⏱️', tipo: 'MARCAJE MUY RECIENTE',
-              nombre: func.nombre, rol: func.rol,
+              nombre: func.nombre,
               hora: obtenerHoraTabletLegible(),
               msg: `Marcaje registrado hace ${Math.floor(difSeg)}s. Espera unos segundos.`
             };
@@ -592,7 +593,7 @@
         }
       }
 
-      // 4. REGLA: Jornada ya completada (ya tiene entrada y salida)
+      // 2. REGLA: Jornada ya completada
       if (entrada && salida) {
         const dtIn = new Date(entrada.timestamp);
         const dtOut = new Date(salida.timestamp);
@@ -600,7 +601,7 @@
         const hOut = !isNaN(dtOut.getTime()) ? obtenerHoraTabletLegible(dtOut) : salida.timestamp.slice(11, 19);
         return {
           ok: false, tipoClase: 'warn', icono: '🔒', tipo: 'JORNADA FINALIZADA',
-          nombre: func.nombre, rol: func.rol,
+          nombre: func.nombre,
           hora: obtenerHoraTabletLegible(),
           msg: `Tu jornada de hoy ya finalizó (Entrada: ${hIn} · Salida: ${hOut}). No se admiten más registros hoy.`
         };
@@ -608,12 +609,12 @@
 
       const forzarSalida = document.getElementById('check-forzar-salida').checked;
 
-      // 5. REGLA: No tiene entrada hoy -> Registrar ENTRADA
+      // 3. REGLA: No tiene entrada hoy -> Registrar ENTRADA
       if (!entrada) {
         if (forzarSalida) {
           return {
             ok: false, tipoClase: 'warn', icono: '⚠️', tipo: 'SIN ENTRADA',
-            nombre: func.nombre, rol: func.rol,
+            nombre: func.nombre,
             hora: obtenerHoraTabletLegible(),
             msg: 'No puedes registrar salida porque aún no tienes una entrada registrada hoy.'
           };
@@ -621,13 +622,13 @@
         await insertarEvento(rut, 'entrada');
         return {
           ok: true, tipoClase: 'entrada', icono: '🟢', tipo: 'ENTRADA',
-          nombre: func.nombre, rol: func.rol,
+          nombre: func.nombre,
           hora: obtenerHoraTabletLegible(),
           msg: '¡Bienvenido/a a la Escuela Villa Las Peñas! Entrada registrada exitosamente.'
         };
       }
 
-      // 6. REGLA: Ya tiene entrada hoy -> Evaluar tiempo de permanencia (< 20 min)
+      // 4. REGLA: Ya tiene entrada hoy -> Evaluar tiempo de permanencia (< 20 min)
       const dtEntrada = new Date(entrada.timestamp);
       let minutosTranscurridos = 999;
       let hEntrada = entrada.timestamp.slice(11, 19);
@@ -637,23 +638,22 @@
         hEntrada = obtenerHoraTabletLegible(dtEntrada);
       }
 
-      // Si han pasado menos de 20 min y NO activaron Forzar Salida: BLOQUEAR
       if (!forzarSalida && minutosTranscurridos < 20) {
         return {
           ok: false, tipoClase: 'warn', icono: '🏫', tipo: 'YA EN EL RECINTO',
-          nombre: func.nombre, rol: func.rol,
+          nombre: func.nombre,
           hora: hEntrada,
           msg: `Ya registraste tu entrada hoy a las ${hEntrada}. Para retirarte ahora, activa la opción "Forzar Salida" en pantalla.`
         };
       }
 
-      // 7. Registrar SALIDA
+      // 5. Registrar SALIDA
       await insertarEvento(rut, 'salida');
       document.getElementById('check-forzar-salida').checked = false;
 
       return {
         ok: true, tipoClase: 'salida', icono: '🔵', tipo: 'SALIDA',
-        nombre: func.nombre, rol: func.rol,
+        nombre: func.nombre,
         hora: obtenerHoraTabletLegible(),
         msg: '¡Hasta pronto! Salida registrada exitosamente. Tu jornada de hoy ha finalizado.'
       };
@@ -675,7 +675,6 @@
       document.getElementById('res-icon').textContent = res.icono || '❌';
       document.getElementById('res-tipo').textContent = res.tipo || 'RESULTADO';
       document.getElementById('res-nombre').textContent = res.nombre || '';
-      document.getElementById('res-rol').textContent = res.rol || '';
       document.getElementById('res-hora').textContent = res.hora || obtenerHoraTabletLegible();
       document.getElementById('res-msg').textContent = res.msg || '';
 
@@ -692,7 +691,7 @@
     }
 
     // ── Cámara (Frontal por Defecto + Switch) ──────────────────────────────────
-    let camaraModo = "user"; // "user" (frontal) o "environment" (trasera)
+    let camaraModo = "user";
     let streamActual = null;
     let procesando = false;
     let ultimoQR = "";
@@ -713,7 +712,6 @@
         streamActual = stream;
         video.srcObject = stream;
 
-        // Efecto espejo solo si es cámara frontal
         if (camaraModo === "user") {
           video.classList.add("espejo");
           document.getElementById('label-camara').textContent = "Frontal";
@@ -757,7 +755,7 @@
               if (!val.valido) {
                 mostrarResultado({
                   ok: false, tipoClase: 'error', icono: '❌', tipo: 'QR INVÁLIDO',
-                  nombre: 'Error de Lectura', rol: '', msg: val.msg
+                  nombre: 'Error de Lectura', msg: val.msg
                 });
               } else {
                 const res = await procesarMarcaje(val.rut);
@@ -766,13 +764,42 @@
             } catch (err) {
               mostrarResultado({
                 ok: false, tipoClase: 'error', icono: '⚠️', tipo: 'ERROR DE CONEXIÓN',
-                nombre: 'Fallo Temporal', rol: '', msg: 'No se pudo conectar a la base de datos: ' + err.message
+                nombre: 'Fallo Temporal', msg: 'No se pudo conectar a la base de datos: ' + err.message
               });
             }
           }
         }
       }
       requestAnimationFrame(scanLoop);
+    }
+
+    // ── PWA: Instalación en Pantalla de la Tablet ──────────────────────────────
+    let deferredPromptTablet = null;
+    const btnInstalarTablet = document.getElementById('btn-instalar-tablet');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPromptTablet = e;
+      if (btnInstalarTablet) {
+        btnInstalarTablet.style.display = 'flex';
+      }
+    });
+
+    btnInstalarTablet.addEventListener('click', async () => {
+      if (deferredPromptTablet) {
+        deferredPromptTablet.prompt();
+        const { outcome } = await deferredPromptTablet.userChoice;
+        if (outcome === 'accepted') {
+          btnInstalarTablet.style.display = 'none';
+        }
+        deferredPromptTablet = null;
+      }
+    });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
+      });
     }
 
     iniciarCamara();

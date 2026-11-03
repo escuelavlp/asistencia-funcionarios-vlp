@@ -1,9 +1,10 @@
-const CACHE_NAME = 'asistencia-vlp-v1';
+const CACHE_NAME = 'asistencia-vlp-v2';
 const ASSETS = [
   './',
   './index.html',
   './tablet.html',
   './manifest.json',
+  './manifest-tablet.json',
   './js/jsQR.js',
   './js/qrcode.min.js',
   './icons/icon-192.png',
@@ -27,7 +28,6 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Solo cachear archivos locales GET, peticiones API a Supabase pasan directo a la red
   if (e.request.url.includes('supabase.co')) {
     return;
   }
@@ -35,4 +35,3 @@ self.addEventListener('fetch', (e) => {
     caches.match(e.request).then((res) => res || fetch(e.request))
   );
 });
-
