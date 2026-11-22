@@ -491,7 +491,9 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
+        navigator.serviceWorker.register('./sw.js?v=7').then(reg => {
+          reg.update();
+        }).catch(err => console.log('SW error', err));
       });
     }
 

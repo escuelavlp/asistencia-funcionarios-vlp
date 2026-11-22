@@ -845,7 +845,7 @@
     // Actualizar Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=6').then(reg => {
+        navigator.serviceWorker.register('./sw.js?v=7').then(reg => {
           reg.update();
         }).catch(err => console.log('SW error', err));
       });
