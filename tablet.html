@@ -413,8 +413,8 @@
     }
 
     // ── Configuración Supabase ───────────────────────────────────────────────
-    const SUPABASE_URL = "https://csjnjitjycbnumzodvvv.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_QsS5e0fI4PJ90uZfD7vUPA_CxLbz4F6";
+    const SUPABASE_URL = "https://rbcruatrbknhaequrwbd.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_7AjxANayjSvkUIBk5SWPZA_IayjHk2B";
     const QR_SECRET_KEY = "eavlp_control_asistencia_secret_2026";
     const TABLA = "asistencia_funcionarios_eventos";
 
@@ -576,7 +576,8 @@
         body: JSON.stringify({
           funcionario_id: rut,
           tipo: tipo,
-          timestamp: timestampLocal
+          timestamp: timestampLocal,
+          colegio_id: 1
         })
       });
       if (!r.ok) {
